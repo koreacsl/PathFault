@@ -1,0 +1,7 @@
+{
+  "web_app_components": {
+    "tmpserver": {
+      "standalone": true
+    }
+  }
+}

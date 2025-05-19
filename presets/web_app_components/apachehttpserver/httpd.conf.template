@@ -1,0 +1,61 @@
+# Load required modules
+LoadModule unixd_module modules/mod_unixd.so
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule mpm_event_module modules/mod_mpm_event.so
+LoadModule authz_core_module modules/mod_authz_core.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule env_module modules/mod_env.so
+
+# Define default variables
+Define SERVICE_NAME "undefined"
+Define TMP_SERVER_PORT "8000"
+
+# Apache Basic Configuration
+ServerRoot "/usr/local/apache2"
+Listen ${PORT}
+
+# Suppress Warning
+ServerName localhost:${PORT}
+
+# Set Server Admin Email
+ServerAdmin admin@example.com
+
+# Include Proxy Map Configuration
+Include /usr/local/apache2/conf/apache_proxy_map.conf
+
+# Logging Configuration
+ErrorLog "/usr/local/apache2/logs/error_log"
+CustomLog "/usr/local/apache2/logs/access_log" combined
+
+# Basic Document Root
+<Directory "/usr/local/apache2/htdocs">
+    AllowOverride None
+    Require all granted
+</Directory>
+
+# Disable default HTML error pages
+ErrorDocument 200 " "
+ErrorDocument 400 " "
+ErrorDocument 404 " "
+ErrorDocument 500 " "
+
+# Rewrite Rules
+RewriteEngine On
+
+# Extract first path segment as SERVICE_NAME
+RewriteCond %{REQUEST_URI} ^/([^/]+)
+RewriteRule ^ - [E=SERVICE_NAME:%1]
+
+# Handle unmapped services by forwarding to tmpserver
+RewriteCond %{ENV:SERVICE_NAME} !=""
+RewriteCond %{ENV:TARGET_PORT} =""
+RewriteRule ^ http://tmpserver:${TMP_SERVER_PORT}%{REQUEST_URI} [P,L]
+
+# ProxyPassReverse rules
+<IfModule proxy_module>
+    ProxyPreserveHost On
+</IfModule>

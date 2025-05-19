@@ -1,0 +1,2 @@
+# Remap rules generated from port_map.json
+map / http://0.0.0.0:${PORT}/

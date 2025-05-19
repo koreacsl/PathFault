@@ -1,0 +1,19 @@
+{
+  "web_app_components": {
+    "tmpserver": {
+      "standalone": true
+    },
+    "apachehttpserver": {
+      "standalone": true
+    },
+    "apachetomcat": {
+      "standalone": true
+    },
+    "apachetrafficserver2apachehttpserver": {
+      "standalone": true
+    },
+    "nginx": {
+      "standalone": true
+    }
+  }
+}

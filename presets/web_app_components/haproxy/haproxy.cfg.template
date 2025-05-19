@@ -1,0 +1,18 @@
+global
+    log stdout format raw local0
+
+defaults
+    mode http
+    log global
+    option httplog
+    timeout connect 5s
+    timeout client  50s
+    timeout server  50s
+
+frontend http_in
+    bind *:${PORT}
+    default_backend tmpserver
+
+backend tmpserver
+    mode http
+    server tmpserver tmpserver:${TMPPORT} check

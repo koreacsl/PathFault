@@ -1,0 +1,8 @@
+{
+  "rules": [
+    {
+      "directory": "chatgpt_account_takeover",
+      "output_url": "/api/auth/session"
+    }
+  ]
+}

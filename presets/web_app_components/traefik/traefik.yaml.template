@@ -1,0 +1,12 @@
+entryPoints:
+  web:
+    address: ":${PORT}"
+
+providers:
+  file:
+    filename: /app/dynamic_conf.yaml
+
+accessLog: {}
+
+log:
+  level: INFO

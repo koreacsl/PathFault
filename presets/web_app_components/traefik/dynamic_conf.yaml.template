@@ -1,0 +1,11 @@
+http:
+  routers:
+    catchAll:
+      rule: "PathPrefix(`/`)"
+      service: tmpserver-service
+
+  services:
+    tmpserver-service:
+      loadBalancer:
+        servers:
+          - url: "http://tmpserver:${TMPPORT}"
