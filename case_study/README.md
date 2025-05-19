@@ -50,3 +50,13 @@ If you encounter any issues, please ensure your environment matches the [listed 
 ---
 
 We hope this guide facilitates straightforward validation of our results and encourages further exploration based on our methodology.
+
+---
+
+### 📊 Data Files
+
+All data files required to reproduce the case studies in the paper are available at the following link:
+
+- [PathFault Case Study Data Files](https://drive.google.com/file/d/1p2nmW-sQ84hWz8Vy4b1LTR3hk-7iBfzw/view?usp=sharing)
+
+Download the files and extract them to the `case_study/` directory as specified in each case study's README. Ensure the `data.zip` file is correctly placed to successfully run the experiments.
