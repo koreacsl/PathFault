@@ -4,7 +4,7 @@ import uuid
 import ast
 import random
 from typing import Optional, Tuple, List
-from z3 import BoolRef, And, BoolVal, String, If, ExprRef  # Z3의 문자열 및 조건 표현
+from z3 import BoolRef, And, BoolVal, String, If, ExprRef
 from math import comb
 from dataclasses import dataclass
 
@@ -86,12 +86,10 @@ class Server:
 
         self.normalization_list: List[NormalizationTransformation] = []
 
-        # 🔹 Discrepancy 정보 관련 (Optional 인자)
         self.inconsistency_info: List[InconsistencyInfo] = inconsistency_info or []
         self.omitted_inconsistency_info: List[InconsistencyInfo] = omitted_inconsistency_info or []
         self.unprocessed_inconsistency_info: List[InconsistencyInfo] = unprocessed_inconsistency_info or []
 
-        # 초기 설정 (Setter 자동 호출)
         self.is_normalize = is_normalize
         self.is_decode = is_decode
 
@@ -129,29 +127,29 @@ class Server:
             self.add_default_normalization()
 
     def add_default_normalization(self):
-        """기본 Normalization 자동 추가 (확장 로직 없음)"""
+        """Add default normalization automatically (no extension logic)"""
         if BASE_NORMALIZATION not in self.normalization_list:
             self.normalization_list.append(BASE_NORMALIZATION)
             logger.debug(f"{self.name}: Added default normalization: '/../'")
 
     def get_expanded_normalization_with_decode(
             self,
-            base_norm: Transformation  # 🔥 Transformation 객체로 인자 변경
+            base_norm: Transformation
     ) -> List[Transformation]:
         """
-        base_norm을 기반으로 확장된 Normalization 후보를 리턴
-        (self.normalization_list는 수정하지 않음)
+        Return extended Normalization candidates based on base_norm
+        (does not modify self.normalization_list)
         """
 
         if self.is_normalize:
             expansion_list = [Transformation(
-                name=f"Normalization({base_norm.transformation_type.normalization_str})",  # 🔥 수정
-                transformation_type=base_norm.transformation_type,  # 🔥 Transformation에서 타입 추출
-                conditions=[ContainsType(base_norm.transformation_type.normalization_str)]  # 🔥 ContainsType 추가
+                name=f"Normalization({base_norm.transformation_type.normalization_str})",
+                transformation_type=base_norm.transformation_type,
+                conditions=[ContainsType(base_norm.transformation_type.normalization_str)]
             )]
 
             if self.is_decode:
-                # '/' 인코딩 확장
+                # '/' encoding expansion
                 expanded_results = set(n.transformation_type.normalization_str for n in expansion_list)
                 for original_str in expanded_results:
                     new_candidates = encode_partial_combinations(original_str, '/')
@@ -159,10 +157,10 @@ class Server:
                         expansion_list.append(Transformation(
                             name=f"Normalization({enc})",
                             transformation_type=NormalizationTransformation(enc),
-                            conditions=[ContainsType(enc)]  # 🔥 ContainsType 추가
+                            conditions=[ContainsType(enc)]
                         ))
 
-                # '.' 인코딩 확장
+                # '.' encoding expansion
                 expanded_results = set(n.transformation_type.normalization_str for n in expansion_list)
                 for original_str in expanded_results:
                     new_candidates = encode_partial_combinations(original_str, '.')
@@ -170,7 +168,7 @@ class Server:
                         expansion_list.append(Transformation(
                             name=f"Normalization({enc})",
                             transformation_type=NormalizationTransformation(enc),
-                            conditions=[ContainsType(enc)]  # 🔥 ContainsType 추가
+                            conditions=[ContainsType(enc)]
                         ))
 
             return expansion_list
@@ -182,18 +180,18 @@ class Server:
             replace_transform: ReplaceTransformation
     ) -> List[Transformation]:
         """
-        replace_transform을 기반으로 normalization 후보를 확장하는 메소드
+        Extend normalization candidates based on replace_transform
         """
 
         result = set(Transformation(
             name=f"Normalization({norm.transformation_type.normalization_str})",
             transformation_type=norm.transformation_type,
-            conditions=[ContainsType(norm.transformation_type.normalization_str)]  # 🔥 ContainsType 추가
+            conditions=[ContainsType(norm.transformation_type.normalization_str)]
         ) for norm in self.normalization_list)
 
         replace_expanded = set()
 
-        # ReplaceTransformation을 통한 확장
+        # Expansion through ReplaceTransformation
         for norm in self.normalization_list:
             norm_str = norm.transformation_type.normalization_str
             if replace_transform.replace_str in norm_str:
@@ -206,10 +204,10 @@ class Server:
                     replace_expanded.add(Transformation(
                         name=f"Normalization({c})",
                         transformation_type=NormalizationTransformation(c),
-                        conditions=[ContainsType(c)]  # 🔥 ContainsType 추가
+                        conditions=[ContainsType(c)]
                     ))
 
-        # Replace 확장 결과에 대해 추가 인코딩 후보 생성
+        # Generate additional encoding candidate about Replace expansion results
         if self.is_decode:
             encoded_candidates = set()
             for candidate in replace_expanded:
@@ -222,11 +220,11 @@ class Server:
                 replace_expanded.add(Transformation(
                     name=f"Normalization({encoded_str})",
                     transformation_type=NormalizationTransformation(encoded_str),
-                    conditions=[ContainsType(encoded_str)]  # 🔥 ContainsType 추가
+                    conditions=[ContainsType(encoded_str)]
                 ))
 
         if self.is_decode:
-            # Replace의 target_str이 ENCODING_MAP에 존재하는 경우 인코딩된 값 추가
+            # Add encoded value when the Replace.target_str is in ENCODING_MAP
             if replace_transform.target_str in ENCODING_MAP:
                 encoded_target = ENCODING_MAP[replace_transform.target_str]
                 encoded_target_candidates = set()
@@ -243,29 +241,27 @@ class Server:
                     replace_expanded.add(Transformation(
                         name=f"Normalization({encoded_str})",
                         transformation_type=NormalizationTransformation(encoded_str),
-                        conditions=[ContainsType(encoded_str)]  # 🔥 ContainsType 추가
+                        conditions=[ContainsType(encoded_str)]
                     ))
 
-        # 기존 normalization_list와 확장 결과 합치기
+        # merge with normalization_list
         result.update(replace_expanded)
 
         return list(result)
 
     def apply_pre_conditions(self, input_url: ExprRef) -> BoolRef:
-        # 새로운 변수 생성
+        # Create new variable
         pre_var = String(f"pre_{uuid.uuid4().hex[:8]}")
-        # 원본 input_url과 pre_var가 같음을 조건에 추가한 후,
-        # pre_var에 대해 target_pre_condition_list의 모든 조건 적용
+        # Add condition that input_url equals pre_var, then apply all conditions from target_pre_condition_list and condition_list to pre_var
         condition_statements = [pre_var == input_url] + [
             condition.apply(pre_var) for condition in (self.target_pre_condition_list + self.condition_list)
         ]
         return And(*condition_statements) if condition_statements else BoolVal(True)
 
     def apply_post_conditions(self, input_url: ExprRef) -> BoolRef:
-        # 새로운 변수 생성
+        # Create new variable
         post_var = String(f"post_{uuid.uuid4().hex[:8]}")
-        # 원본 input_url과 post_var가 같음을 조건에 추가한 후,
-        # post_var에 대해 target_post_condition_list와 condition_list의 모든 조건 적용
+        # Add condition that input_url equals post_var, then apply all conditions from target_post_condition_list and condition_list to post_var
         condition_statements = [post_var == input_url] + [
             condition.apply(post_var) for condition in (self.target_post_condition_list)
         ]
@@ -274,7 +270,7 @@ class Server:
     def apply_decoding(self, input_url: ExprRef) -> ExprRef:
         if self.is_decode:
             is_first = True
-            # "%25"를 제외한 나머지 치환 수행
+            # Perform replacements except for "%25"
             for encoded, decoded in DECODING_MAP.items():
                 if encoded == "%25":
                     continue
@@ -284,7 +280,7 @@ class Server:
                 else:
                     next_decoded_output = ReplaceAll(next_decoded_output, encoded, decoded)
 
-            # 마지막에 "%25" 치환 수행
+            # Perform "%25" replacement last
             next_decoded_output = ReplaceAll(next_decoded_output, "%25", DECODING_MAP["%25"])
             return next_decoded_output
         else:
@@ -292,29 +288,29 @@ class Server:
 
     def apply_transformations(self, input_url: ExprRef) -> Tuple[ExprRef, BoolRef]:
         """
-        선택된 Transformation을 순차적으로 input_url에 적용
-        - 변환 결과 (ExprRef)
-        - 모든 조건을 만족해야 하는 BoolRef 반환
+        Apply selected transformations sequentially to input_url
+        - Return transformed result (ExprRef)
+        - Return BoolRef requiring all conditions to be satisfied
         """
-        # 🔥 초기 transformed_output을 UUID 기반으로 설정
+        # Initialize transformed_output with UUID-based name
         transformed_output = String(f"transformed_{uuid.uuid4().hex[:8]}")
         condition_statements: List[BoolRef] = []
 
-        # ✅ 최초 input_url과 첫 번째 transformed_output이 같아야 함
+        # Initial input_url must equal first transformed_output
         condition_statements.append(input_url == transformed_output)
 
         for idx, transform in enumerate(self.transformation_list):
-            # 🔥 각 변환 결과에 대해 고유한 변수 생성
+            # Create unique variable for each transformation result
             next_transformed_output = String(f"transformed_{uuid.uuid4().hex[:8]}")
 
             new_transformed_output, condition = transform.apply_transformation_for_validation(transformed_output)
 
-            # 조건이 True이면 new_transformed_output, 아니면 이전 transformed_output을 사용하도록 If로 처리
+            # Use If to select new_transformed_output if condition is True, else keep previous transformed_output
             condition_statements.append(
                 next_transformed_output == If(condition, new_transformed_output, transformed_output)
             )
 
-            # 🔹 다음 루프에서 사용할 변수 갱신
+            # Update variable for next loop
             transformed_output = next_transformed_output
 
         combined_conditions = And(*condition_statements) if condition_statements else BoolVal(True)
@@ -322,24 +318,24 @@ class Server:
         return transformed_output, combined_conditions
 
     def apply_essential_tranformation(self, input_url: ExprRef) -> Tuple[ExprRef, BoolRef]:
-        # 🔥 초기 transformed_output을 UUID 기반으로 설정
+        # Initialize transformed_output with UUID-based name
         transformed_output = String(f"transformed_{uuid.uuid4().hex[:8]}")
         condition_statements: List[BoolRef] = []
 
-        # ✅ 최초 input_url과 첫 번째 transformed_output이 같아야 함
+        # Initial input_url must equal first transformed_output
         condition_statements.append(input_url == transformed_output)
 
         for idx, transform in enumerate(self.essential_transformation_list):
-            # 🔥 각 변환 결과에 대해 고유한 변수 생성
+            # Create unique variable for each transformation result
             next_transformed_output = String(f"transformed_{uuid.uuid4().hex[:8]}")
 
             new_transformed_output, condition = transform.apply_transformation(transformed_output)
             condition_statements.append(condition)
 
-            # ✅ 이전 transformed_output과 새로운 transformed_output이 같아야 함
+            # Previous transformed_output must equal new transformed_output
             condition_statements.append(new_transformed_output == next_transformed_output)
 
-            # 🔹 다음 루프에서 사용할 변수 갱신
+            # Update variable for next loop
             transformed_output = next_transformed_output
 
         combined_conditions = And(*condition_statements) if condition_statements else BoolVal(True)
@@ -348,43 +344,42 @@ class Server:
 
     def apply_normalization(self, transformed_output: ExprRef) -> Tuple[ExprRef, BoolRef]:
         """
-        🔥 Normalization 단계 추가
-        - Normalize 플래그가 활성화된 경우 추가 수행
-        - `custom_normalization` 인자가 없는 경우 → 기본적으로 BASE_NORMALIZATION 수행
-        - `custom_normalization` 인자가 있는 경우 → 해당 Normalization만 수행
+        Add normalization step
+        - Performed if normalize flag is enabled
+        - Without custom_normalization, defaults to BASE_NORMALIZATION
+        - With custom_normalization, performs only specified normalization
         """
         condition_statements: List[BoolRef] = []
 
-        # 초기 normalized_expr는 transformed_output
+        # Initial normalized_expr is transformed_output
         normalized_expr = transformed_output
 
         if self.is_normalize:
-            # 각 단계에서 새로운 normalized_output 변수를 생성
+            # Create new normalized_output variable for each step
             next_normalized_output = String(f"normalized_{uuid.uuid4().hex[:8]}")
 
-            # norm.apply_transformation_for_validation은 (변환결과, 조건)을 반환
+            # norm.apply_transformation_for_validation returns (transformed result, condition)
             new_normalized_output, normalize_condition = BASE_NORMALIZATION.apply_transformation(normalized_expr)
 
-            # 조건이 만족되면 new_normalized_output, 아니면 이전 normalized_expr을 사용
+            # Use new_normalized_output if condition is satisfied, else keep previous normalized_expr
             condition_statements.append(
                 next_normalized_output == If(normalize_condition, new_normalized_output, normalized_expr)
             )
 
-            # 다음 단계에 사용할 normalized_expr 업데이트
+            # Update normalized_expr for next step
             normalized_expr = next_normalized_output
         else:
-            # Normalize 플래그가 비활성화된 경우, 변환 없이 원래의 값 사용
+            # If normalize flag is disabled, use original value without transformation
             normalized_expr = transformed_output
 
         combined_conditions = And(*condition_statements) if condition_statements else BoolVal(True)
 
         return normalized_expr, combined_conditions
 
-
 class ServerAction:
     def __init__(
             self,
-            server: Server,  # 🔥 원본 Server 클래스 추가
+            server: Server,
             name: str,
             condition_list: Optional[List[_ConditionType]] = None,
             target_pre_condition_list: Optional[List[_ConditionType]] = None,
@@ -392,7 +387,7 @@ class ServerAction:
             transformation_list: Optional[List[Transformation]] = None,
             normalize: bool = False,
     ) -> None:
-        self.server: Server = server  # 🔥 원본 Server 저장
+        self.server: Server = server
         self.name: str = name
         self.condition_list: List[_ConditionType] = condition_list or []
         self.target_pre_condition_list: List[_ConditionType] = target_pre_condition_list or []
@@ -406,60 +401,56 @@ class ServerAction:
         ]
         return And(*condition_statements) if condition_statements else BoolVal(True)
 
-
     def apply_post_conditions(self, input_url: ExprRef) -> BoolRef:
         condition_statements: List[BoolRef] = [
             condition.apply(input_url) for condition in self.target_post_condition_list
         ]
         return And(*condition_statements) if condition_statements else BoolVal(True)
 
-
     def apply_transformations(self, input_url: ExprRef) -> Tuple[ExprRef, BoolRef]:
         """
-        선택된 Transformation을 순차적으로 input_url에 적용
-        - 변환 결과 (ExprRef)
-        - 모든 조건을 만족해야 하는 BoolRef 반환
+        Apply selected transformations sequentially to input_url
+        - Return transformed result (ExprRef)
+        - Return BoolRef requiring all conditions to be satisfied
         """
 
-        # 🔥 초기 transformed_output을 UUID 기반으로 설정
+        # Initialize transformed_output with UUID-based name
         transformed_output = String(f"transformed_{uuid.uuid4().hex[:8]}")
         condition_statements: List[BoolRef] = []
 
-        # ✅ 최초 input_url과 첫 번째 transformed_output이 같아야 함
+        # Initial input_url must equal first transformed_output
         condition_statements.append(input_url == transformed_output)
 
         for idx, transform in enumerate(self.transformation_list):
-            # 🔥 각 변환 결과에 대해 고유한 변수 생성
+            # Create unique variable for each transformation result
             next_transformed_output = String(f"transformed_{uuid.uuid4().hex[:8]}")
 
             new_transformed_output, condition = transform.apply_transformation(transformed_output)
             condition_statements.append(condition)
 
-            # ✅ 이전 transformed_output과 새로운 transformed_output이 같아야 함
+            # Previous transformed_output must equal new transformed_output
             condition_statements.append(new_transformed_output == next_transformed_output)
 
-            # 🔹 다음 루프에서 사용할 변수 갱신
+            # Update variable for next loop
             transformed_output = next_transformed_output
 
         combined_conditions = And(*condition_statements) if condition_statements else BoolVal(True)
 
         return transformed_output, combined_conditions
 
-
-    def apply_normalization(self, transformed_output: ExprRef, custom_normalization: Optional[Transformation] = None) -> \
+    def apply_normalization(self, transformed_output: ExprRef,
+                            custom_normalization: Optional[Transformation] = None) -> \
             Tuple[ExprRef, BoolRef]:
         """
-        🔥 Normalization 단계 추가
-        - Normalize 플래그가 활성화된 경우 추가 수행
-        - `custom_normalization` 인자가 없는 경우 → 기본적으로 BASE_NORMALIZATION 수행
-        - `custom_normalization` 인자가 있는 경우 → 해당 Normalization만 수행
+        - Perform normalization if normalize flag is enabled
+        - Without custom_normalization, defaults to BASE_NORMALIZATION
+        - With custom_normalization, performs only specified normalization
         """
 
         condition_statements: List[BoolRef] = []
 
-        # 🔹 Normalize가 True인 경우 Normalization 수행
+        # Perform normalization if normalize is True
         if self.normalize:
-            # 🔥 첫 번째 normalized_output이 transformed_output과 동일하도록 조건 추가
             normalized_output = String(f"normalized_{uuid.uuid4().hex[:8]}")
             condition_statements.append(transformed_output == normalized_output)
 
@@ -467,19 +458,19 @@ class ServerAction:
                 new_normalized_output, normalize_condition = custom_normalization.apply_transformation(
                     normalized_output)
             else:
-                new_normalized_output, normalize_condition = BASE_NORMALIZATION.apply_transformation(normalized_output)
+                new_normalized_output, normalize_condition = BASE_NORMALIZATION.apply_transformation(
+                    normalized_output)
 
             condition_statements.append(normalize_condition)
 
-            # 🔥 각 단계의 normalized_output이 다음 normalized_output과 같도록 조건 추가
             next_normalized_output = String(f"normalized_{uuid.uuid4().hex[:8]}")
             condition_statements.append(new_normalized_output == next_normalized_output)
 
-            # 🔹 다음 단계에서 사용할 `normalized_output` 갱신
+            # Update normalized_output for next step
             normalized_output = next_normalized_output
 
         else:
-            # 🔹 Normalize 플래그가 비활성화된 경우 → 기존 `transformed_output`을 반환
+            # If normalize flag is disabled, return original transformed_output
             normalized_output = transformed_output
 
         combined_conditions = And(*condition_statements) if condition_statements else BoolVal(True)
@@ -490,7 +481,7 @@ class ServerAction:
         return (
             f"ServerAction(\n"
             f"  name={self.name},\n"
-            f"  server={self.server.name},\n"  # 🔥 원본 서버 이름 출력
+            f"  server={self.server.name},\n"
             f"  normalize={'On' if self.normalize else 'Off'},\n"
             f"  condition_list={[str(cond) for cond in self.condition_list]},\n"
             f"  target_pre_condition_list={[str(cond) for cond in self.target_pre_condition_list]},\n"
@@ -499,13 +490,10 @@ class ServerAction:
             f")"
         )
 
-
-def create_server_action(server: Server, selected_transforms: List[Transformation], normalize: bool) -> ServerAction:
-    """
-    단일 서버에 대한 ServerAction 객체 생성
-    """
+def create_server_action(server: Server, selected_transforms: List[Transformation],
+                         normalize: bool) -> ServerAction:
     return ServerAction(
-        server=server,  # 🔥 원본 Server 추가
+        server=server,
         name=server.name,
         condition_list=server.condition_list,
         target_pre_condition_list=server.target_pre_condition_list,
@@ -514,68 +502,61 @@ def create_server_action(server: Server, selected_transforms: List[Transformatio
         normalize=normalize
     )
 
-
-def get_server_actions(servers: List[Server], selected_transforms: List[List[Transformation]], normalize_config: List[bool]) -> List[ServerAction]:
-    """
-    여러 서버에 대한 ServerAction 객체 리스트 생성
-    """
+def get_server_actions(servers: List[Server], selected_transforms: List[List[Transformation]],
+                       normalize_config: List[bool]) -> List[ServerAction]:
     server_actions = [
         create_server_action(server, selected_transforms[idx], normalize_config[idx])
         for idx, server in enumerate(servers)
     ]
     return server_actions
 
-
-
-# ---- 가능한 모든 조합 수 계산 ----
+# ---- Calculate total possible combinations ----
 def calculate_combinations(servers, max_transformation_num=2):
     total_transformation_combinations = 1
 
-    # Transformation 조합 계산
+    # Calculate transformation combinations
     for server in servers:
         combined_transformations = server.transformation_list + server.essential_transformation_list
 
-        # 🔹 Transformation 조합: 0개 ~ max_transformation_num개 선택
+        # Transformation combinations: select 0 to max_transformation_num
         total_transformation_combinations *= sum(
             comb(len(combined_transformations), i)
             for i in range(0, max_transformation_num + 1)
         )
 
-    # Normalize 조합 추가 (최대 1개만 True)
+    # Add normalize combinations (at most one True)
     normalize_candidates = sum(1 for server in servers if server.is_normalize)
     total_transformation_combinations *= comb(normalize_candidates, 1) + 1
 
     return total_transformation_combinations
 
-
-# ---- 조합 기록을 위한 집합 ----
+# ---- Set for tracking combinations ----
 executed_combinations = set()
-
 
 def get_server_transformation_combination(server, max_transforms=2):
     combined_transformations = server.transformation_list + server.essential_transformation_list
 
-    # 🔥 가능한 모든 조합 생성 (0 ~ max_transforms까지)
+    # Generate all possible combinations (0 to max_transforms)
     all_combinations = []
     for n in range(max_transforms + 1):
-        all_combinations.extend([list(combination) for combination in itertools.combinations(combined_transformations, n)])
+        all_combinations.extend(
+            [list(combination) for combination in itertools.combinations(combined_transformations, n)])
 
     return all_combinations
 
-
-# 🔹 Normalize 조합 생성 함수 (개선 버전)
+# Generate normalize combinations
 def get_normalize_combinations(servers):
-    # 🔹 True로 설정 가능한 후보 (is_normalize=True인 서버만)
+    # Candidates that can be set to True (servers with is_normalize=True)
     normalize_candidates = [idx for idx, server in enumerate(servers) if server.is_normalize]
 
-    # 🔥 가능한 Normalize 조합 생성
+    # Generate possible normalize combinations
     normalize_combinations = []
 
-    # 모든 False 조합 추가
+    # Add all False combination
     base_config = [False] * len(servers)
     normalize_combinations.append(base_config.copy())
 
-    # 🔹 한 서버만 True인 조합 추가
+    # Add combinations with one server set to True
     for idx in normalize_candidates:
         normalize_config = base_config.copy()
         normalize_config[idx] = True
@@ -583,8 +564,7 @@ def get_normalize_combinations(servers):
 
     return normalize_combinations
 
-
-# 🔹 Transformation + Normalize 조합 생성
+# Generate Transformation + Normalize combinations
 def get_all_server_transformation_combinations(servers, max_transforms=2):
     total_combination_list = []
 
@@ -592,23 +572,24 @@ def get_all_server_transformation_combinations(servers, max_transforms=2):
         combinations = get_server_transformation_combination(server, max_transforms)
         total_combination_list.append(combinations)
 
-    # 🔥 Transformation 조합 생성
+    # Generate transformation combinations
     all_combinations = [list(combination) for combination in itertools.product(*total_combination_list)]
 
-    # 🔥 Normalize 조합 추가
+    # Add normalize combinations
     normalize_combinations = get_normalize_combinations(servers)
 
-    # 🔥 최종 조합 생성
-    final_combinations = [list(combination) for combination in itertools.product(all_combinations, normalize_combinations)]
+    # Generate final combinations
+    final_combinations = [list(combination) for combination in
+                          itertools.product(all_combinations, normalize_combinations)]
 
     return final_combinations
 
-# ---- 랜덤 Transformation + Normalize 선택 로직 ----
+# ---- Random Transformation + Normalize selection logic ----
 def get_random_combination(servers, max_transforms=2):
     total_combination_num = calculate_combinations(servers)
 
     if len(executed_combinations) == total_combination_num:
-        print("[완료] 가능한 모든 조합을 탐색했습니다.")
+        print("[Completed] All possible combinations explored.")
         return None, None
 
     while True:
@@ -616,7 +597,7 @@ def get_random_combination(servers, max_transforms=2):
         normalize_config = [False] * len(servers)
 
         for idx, server in enumerate(servers):
-            # 🔥 transformation_list + essential_transformation_list 포함
+            # Include transformation_list + essential_transformation_list
             combined_transformations = server.transformation_list + server.essential_transformation_list
 
             sample_size = random.randint(0, min(max_transforms, len(combined_transformations)))
@@ -624,14 +605,14 @@ def get_random_combination(servers, max_transforms=2):
                 combined_transformations,
                 sample_size
             )
-            print(f"[🔎 디버깅] 서버: {server.name} | random.sample 결과: {sampled_transforms}")
+            print(f"[Debug] Server: {server.name} | random.sample result: {sampled_transforms}")
 
             selected_transforms.append(sorted(sampled_transforms, key=lambda x: x.name))
 
-            # 🔍 디버깅: 최종 선택된 변환 목록 출력
-            print(f"[🔎 디버깅] 서버: {server.name} | 최종 selected_transforms: {selected_transforms[-1]}")
+            # Debug: Print final selected transforms
+            print(f"[Debug] Server: {server.name} | Final selected_transforms: {selected_transforms[-1]}")
 
-        # Normalize 설정 추가 (최대 1개만 True)
+        # Add normalize setting (at most one True)
         if any(server.is_normalize for server in servers):
             normalize_candidate_indices = [idx for idx, server in enumerate(servers) if server.is_normalize]
             selected_normalize_index = random.choice(normalize_candidate_indices + [-1])
@@ -639,7 +620,7 @@ def get_random_combination(servers, max_transforms=2):
             if selected_normalize_index != -1:
                 normalize_config[selected_normalize_index] = True
 
-        # 변환 결과의 이름을 튜플로 기록 (정렬 기준으로 동일한 조합 처리)
+        # Record combination as tuple of sorted transform names for consistent handling
         combination = tuple(
             (tuple(sorted(trans.name for trans in selected_transforms[i])) or ("None",), normalize_config[i])
             for i in range(len(servers))
@@ -648,6 +629,6 @@ def get_random_combination(servers, max_transforms=2):
         if combination in executed_combinations:
             continue
 
-        # 새로운 조합이면 기록하고 반환
+        # Record and return new combination
         executed_combinations.add(combination)
         return selected_transforms, normalize_config

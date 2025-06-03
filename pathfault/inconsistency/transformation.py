@@ -8,11 +8,11 @@ from .custom_z3_expression import ReplaceAll
 
 class _TransformationType:
     def apply(self, expr: ExprRef) -> ExprRef:
-        """공통 인터페이스로 변환 로직을 처리"""
+        """Handle transformation logic with common interface"""
         raise NotImplementedError("Subclasses must implement 'apply' method")
 
     def apply_for_validation(self, expr: ExprRef) -> ExprRef:
-        """공통 인터페이스로 변환 로직을 처리"""
+        """Handle transformation logic with common interface"""
         raise NotImplementedError("Subclasses must implement 'apply_for_validation' method")
 
     def to_ast(self) -> ast.Call:
@@ -28,15 +28,15 @@ class Transformation:
 
     def apply_transformation(self, expr: ExprRef) -> Tuple[ExprRef, BoolRef]:
         """
-        - 반환값 1: 변환된 ExprRef
-        - 반환값 2: 해당 변환이 만족해야 할 BoolRef (조건)
+        - Return 1: Transformed ExprRef
+        - Return 2: BoolRef condition that must be satisfied
         """
         transformed_output = self.transformation_type.apply(expr)
 
         if not self.conditions:
-            return transformed_output, BoolVal(True)  # 조건이 없는 경우 항상 True 반환
+            return transformed_output, BoolVal(True)  # Return True if no conditions
 
-        # 조건이 있는 경우, 모든 조건을 AND로 묶기
+        # Combine all conditions with AND if conditions exist
         condition_results = [condition.apply(expr) for condition in self.conditions]
         combined_conditions = And(*condition_results)
 
@@ -44,15 +44,15 @@ class Transformation:
 
     def apply_transformation_for_validation(self, expr: ExprRef) -> Tuple[ExprRef, BoolRef]:
         """
-        - 반환값 1: 변환된 ExprRef
-        - 반환값 2: 해당 변환이 만족해야 할 BoolRef (조건)
+        - Return 1: Transformed ExprRef
+        - Return 2: BoolRef condition that must be satisfied
         """
         transformed_output = self.transformation_type.apply_for_validation(expr)
 
         if not self.conditions:
-            return transformed_output, BoolVal(True)  # 조건이 없는 경우 항상 True 반환
+            return transformed_output, BoolVal(True)  # Return True if no conditions
 
-        # 조건이 있는 경우, 모든 조건을 AND로 묶기
+        # Combine all conditions with AND if conditions exist
         condition_results = [condition.apply(expr) for condition in self.conditions]
         combined_conditions = And(*condition_results)
 
@@ -66,7 +66,7 @@ class Transformation:
                 self.transformation_type.to_ast(),
                 ast.List(
                     elts=[
-                        condition.to_ast()  # ✅ 각 Condition이 to_ast() 호출하도록 수정
+                        condition.to_ast()
                         for condition in self.conditions
                     ],
                     ctx=ast.Load()
@@ -77,16 +77,12 @@ class Transformation:
 
 
 
-# T-시리즈 변환 타입 (상속 구조)
 class ReplaceTransformation(_TransformationType):
     def __init__(self, target_str: str, replace_str: str):
         self.target_str = target_str
         self.replace_str = replace_str
 
     def apply(self, expr: ExprRef) -> ExprRef:
-        """
-        Z3의 Replace() 기반 Replace Transformation 로직
-        """
         return Replace(expr, StringVal(self.target_str), StringVal(self.replace_str))
 
     def apply_for_validation(self, expr: ExprRef) -> ExprRef:
@@ -113,28 +109,20 @@ class ReplaceTransformation(_TransformationType):
 
 class SubStringUntilTransformation(_TransformationType):
     """
-    offset부터 특정 delimiter를 찾은 위치까지 substring을 추출
-    - delimiter가 반드시 존재한다고 가정
+    Extract substring from offset to the position of a specific delimiter
+    - Assumes delimiter always exists
     """
     def __init__(self, offset: int, delimiter: str):
         self.offset = offset
         self.delimiter = delimiter
 
     def apply(self, expr: ExprRef) -> ExprRef:
-        """
-        Z3에서 substring(expr, offset, length)
-        - length = IndexOf(expr, delimiter, offset) - offset
-        """
         delimiter_index = IndexOf(expr, StringVal(self.delimiter))
         length_expr = delimiter_index - self.offset
 
         return SubString(expr, self.offset, length_expr)
 
     def apply_for_validation(self, expr: ExprRef) -> ExprRef:
-        """
-        Z3에서 substring(expr, offset, length)
-        - length = IndexOf(expr, delimiter, offset) - offset
-        """
         delimiter_index = IndexOf(expr, StringVal(self.delimiter))
         length_expr = delimiter_index - self.offset
 
@@ -160,21 +148,15 @@ class SubStringUntilTransformation(_TransformationType):
 
 class SubStringOffsetTransformation(_TransformationType):
     """
-    offset만 입력받아 SubString(expr, offset, Length(expr) - offset)을 수행
+    Perform SubString(expr, offset, Length(expr) - offset) with only offset provided
     """
     def __init__(self, offset: int):
         self.offset = offset
 
     def apply(self, expr: ExprRef) -> ExprRef:
-        """
-        SubString(expr, offset, Length(expr) - offset) 을 수행.
-        """
         return SubString(expr, self.offset, Length(expr) - self.offset)
 
     def apply_for_validation(self, expr: ExprRef) -> ExprRef:
-        """
-        SubString(expr, offset, Length(expr) - offset) 을 수행.
-        """
         return SubString(expr, self.offset, Length(expr) - self.offset)
 
     def to_ast(self) -> ast.Call:
@@ -199,14 +181,14 @@ class SubStringOffsetTransformation(_TransformationType):
 class NormalizationTransformation(_TransformationType):
     def __init__(self, normalization_str: str):
         """
-        :param normalization_str: 정규화 대상 문자열 (예: "/../", "./", "%2e")
+        :param normalization_str: String to normalize (e.g., "/../", "./", "%2e")
         """
         self.normalization_str = normalization_str
 
     def apply(self, input_url) -> ExprRef:
         """
-        문자열 내에서 normalization_str을 제거 또는 특정 규칙으로 변환
-        - Z3 ExprRef 및 일반 문자열을 모두 지원 (isinstance 검사 없이)
+        Remove or transform normalization_str in the string
+        - Supports both Z3 ExprRef and regular strings (no isinstance check)
         """
         norm_str = self.normalization_str
 
@@ -227,12 +209,10 @@ class NormalizationTransformation(_TransformationType):
 
     def apply_for_validation(self, input_url: ExprRef) -> ExprRef:
         """
-        문자열 내에서 normalization_str을 제거 또는 특정 규칙으로 변환
-        - Z3 ExprRef 및 일반 문자열을 모두 지원 (isinstance 검사 없이)
+        Remove or transform normalization_str in the string
         """
         norm_str = self.normalization_str
 
-        # Z3 기반 변환 로직
         transformed_output = Concat(
             SubString(
                 input_url,
@@ -319,9 +299,8 @@ class AddPrefixTransformation(_TransformationType):
 
     def __repr__(self):
         return f"AddPrefixTransformation('{self.prefix_str}')"
-# =========================
-# 🔹 Transformation 1: 구분자 이후 슬래시가 있는 경우
-# =========================
+
+
 class DelimiterSlashSplitTransformation(_TransformationType):
     def __init__(self, delimiter: str):
         self.delimiter = delimiter

@@ -1,4 +1,4 @@
-# PathFault: Automated Exploit Generation for Web Applications via HTTP Message Parser Inconsistencies
+# PathFault: Automated Exploit Generation for Web Applications via HTTP Message Parser Discrepancies
 ![PathFault Logo](./figs/PathFaultLogo.png)
 
 PathFault is a tool designed to identify and exploit **path confusion vulnerabilities** in modern web applications.  
@@ -8,6 +8,10 @@ It leverages HTTP message parser inconsistencies across chained web components t
 > However, we strongly recommend reading this usage guide first to understand how the tool works.
 
 ---
+
+## 🔍 Note on Terminology
+
+In the context of this repository, we use the term **Inconsistency** to refer to what is described as **Discrepancy** in the associated paper. While "Discrepancy" is used in the academic context of the paper to denote diferrences in HTTP message parsing, we adopt "Inconsistency" here for its more general and user-friendly connotation, making the tool's purpose more accessible to a broader audience.
 
 ## 🔍 About PathFault
 

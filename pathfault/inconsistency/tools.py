@@ -80,13 +80,10 @@ BASE_NORMALIZATION = Transformation(
     conditions=[ContainsType('/../')]
 )
 
-# ─────────────────────────
-# 유틸리티 함수
-# ─────────────────────────
 def partial_replace_all_combinations(original: str, old: str, new: str) -> List[str]:
     """
-    original에서 old가 발견되는 모든 위치를 각기 new로 치환하는
-    '모든 부분 치환 조합'을 반환.
+    Return all partial replacement combinations where each occurrence of old in original
+    is replaced with new.
     """
     results = set()
     idx_list = []
@@ -99,7 +96,6 @@ def partial_replace_all_combinations(original: str, old: str, new: str) -> List[
         idx_list.append(found)
         start_idx = found + len(old)
 
-    # 부분 치환 (1개만, 2개만, ... 전부) 조합 생성
     for r in range(1, len(idx_list) + 1):
         for combo in combinations(idx_list, r):
             new_chars = list(original)
@@ -115,8 +111,8 @@ def partial_replace_all_combinations(original: str, old: str, new: str) -> List[
 
 def encode_partial_combinations(original: str, target_char: str) -> List[str]:
     """
-    original에서 target_char('/' 또는 '.')의 부분 치환 조합을 모두 생성하여
-    ENCODING_MAP에 따라 인코딩한 문자열들을 반환.
+    Generate all partial replacement combinations of target_char ('/' or '.') in original
+    and return strings encoded according to ENCODING_MAP.
     """
     results = set()
     idx_list = []
@@ -145,12 +141,12 @@ def encode_partial_combinations(original: str, target_char: str) -> List[str]:
 
 
 def add_percent_encoding_candidates(
-    transformation_list: List[Transformation]  # 🔥 변경
-) -> List[Transformation]:  # 🔥 반환도 Transformation으로 변경
-    """모든 후보에 대해 '%' → '%25' 치환 후보 추가"""
+    transformation_list: List[Transformation]
+) -> List[Transformation]:
+    """Add '% -> %25' replacement candidates for all candidates"""
     encoded_candidates = set()
     for norm in transformation_list:
-        if '%' in norm.transformation_type.normalization_str:  # 🔥 수정
+        if '%' in norm.transformation_type.normalization_str:
             new_str = norm.transformation_type.normalization_str.replace('%', '%25')
             encoded_candidates.add(Transformation(
                 name=f"Normalization({new_str})",
@@ -160,21 +156,20 @@ def add_percent_encoding_candidates(
     return list(encoded_candidates)
 
 def remove_conflict_candidates(
-    current_expanded: Iterable[Transformation],  # 🔥 변경
-    pre_server_expanded: Iterable[Transformation]  # 🔥 변경
-) -> List[Transformation]:  # 🔥 반환도 Transformation으로 변경
+    current_expanded: Iterable[Transformation],
+    pre_server_expanded: Iterable[Transformation]
+) -> List[Transformation]:
     """
-    이전 서버의 normalization 후보 중
-    pre_server_expanded에 포함되는 문자열을 가진 항목을 제거
+    Remove items from previous server's normalization candidates
+    that have strings included in pre_server_expanded
     """
     final_expansion = set(current_expanded)
 
-    # 포함 관계 기준 제거 로직
     for pre_norm in pre_server_expanded:
         final_expansion = {
             norm for norm in final_expansion
             if pre_norm.transformation_type.normalization_str
-            not in norm.transformation_type.normalization_str  # 🔥 수정
+            not in norm.transformation_type.normalization_str
         }
 
     return list(final_expansion)
@@ -186,19 +181,17 @@ def get_expanded_normalization_with_pre_server(
     pre_server: "Server"
 ) -> List[NormalizationTransformation]:
     """
-    이전 서버(pre_server)의 설정에 따라
-    normalization_list를 기반으로 확장/제거한 결과만 return
-    (normalization_list는 수정 X)
+    Return results expanded/removed based on normalization_list from pre_server settings
+    (normalization_list is not modified)
 
-    --- 요구 사항 ---
     1) if (normalize=False, decode=True):
-       => 모든 후보에 대해 '% -> %25' 치환한 신규 후보를 추가
+       => Add new candidates with '% -> %25' replacement for all candidates
     2) if (normalize=False, decode=False):
-       => 아무것도 안 함
+       => Do nothing
     3) if (normalize=True, decode=False):
-       => pre_server_expanded의 후보와 '동일한 문자열'을 가진 current_expanded는 제거
+       => Remove current_expanded candidates matching pre_server_expanded strings
     4) if (normalize=True, decode=True):
-       => '% -> %25' 치환 후보를 추가, 그리고 pre_server_expanded와 동일한 후보 제거
+       => Add '% -> %25' replacement candidates and remove candidates matching pre_server_expanded
     """
     final_expansion = set(normalization_list)
 
@@ -214,6 +207,6 @@ def get_expanded_normalization_with_pre_server(
         # 1) if (normalize=False, decode=True)
         final_expansion.update(add_percent_encoding_candidates(normalization_list))
 
-    # 2) if (normalize=False, decode=False) => 아무것도 안 함
+    # 2) if (normalize=False, decode=False) => Do Nothing
 
     return list(final_expansion)
