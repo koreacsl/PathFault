@@ -1,23 +1,22 @@
-# ATS 기본 설정
 records:
   proxy:
     config:
       http:
-        server_ports: "${PORT}"  # 서버가 수신할 포트 (환경 변수 사용)
-        connect_ports: "80 443 8000-9000"  # 프록시가 연결을 허용할 포트 (환경 변수 사용)
+        server_ports: "${PORT}"
+        connect_ports: "80 443 8000-9000"
         cache:
-          http: 0  # HTTP 캐시 비활성화
+          http: 0
         response_default: |
           HTTP/1.1 200 OK
           Content-Type: application/json
 
           {"message": "OK"}
       reverse_proxy:
-        enabled: 1  # 리버스 프록시 활성화
+        enabled: 1
       url_remap:
-        remap_required: 0  # remap.config 없이도 모든 요청을 프록시 가능하도록 변경
-        pristine_host_hdr: 1  # 클라이언트 요청의 Host 헤더 유지
+        remap_required: 0
+        pristine_host_hdr: 1
       admin:
-        enabled: 0  # Admin 인터페이스 비활성화
+        enabled: 0
       log:
-        logfile_dir: "/usr/local/etc/trafficserver/var/log/trafficserver"  # 로그 디렉토리
+        logfile_dir: "/usr/local/etc/trafficserver/var/log/trafficserver"

@@ -14,14 +14,12 @@ http {
     resolver 127.0.0.11 valid=30s ipv6=off;
 
     server {
-        listen ${PORT};  # 환경 변수로 listen 포트 설정
+        listen ${PORT};
 
-        # 첫 번째 세그먼트를 추출하여 서비스 이름 및 포트 매핑
         set $service_name "";
         set $remaining_path "";
 
         location / {
-            # 매핑되지 않은 경우 JSON 반환
             return 200 '{"service_name": "$service_name", "remaining_path": "$remaining_path", "target_port": "null"}';
 
         }

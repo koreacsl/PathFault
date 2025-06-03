@@ -1,13 +1,11 @@
 import os
 
-ATS_MAP_FILE = "/usr/local/etc/trafficserver/remap.config"  # ATS remap 설정 파일 경로
-TMP_SERVER_PORT = os.getenv("TMP_SERVER_PORT", "8000")  # 기본 tmpserver 포트
+ATS_MAP_FILE = "/usr/local/etc/trafficserver/remap.config"
+TMP_SERVER_PORT = os.getenv("TMP_SERVER_PORT", "8000")
 
 def generate_ats_map():
     try:
-        # ATS remap 설정 파일 생성
         with open(ATS_MAP_FILE, "w") as ats_file:
-            # 모든 요청을 nginx로 전달
             ats_file.write(f"map / http://nginx:{8004}/\n")
 
         print(f"ATS remap file generated at {ATS_MAP_FILE}, all requests forwarded to nginx:{8004}")

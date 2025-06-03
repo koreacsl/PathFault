@@ -7,7 +7,6 @@ echo "TMPPORT=${TMPPORT}"
 
 echo "Using PORT=${PORT} and TMPPORT=${TMPPORT}"
 
-# traefik.yaml 환경변수 치환하여 생성
 envsubst '${PORT}' < /app/traefik.yaml.template > /app/traefik.yaml
 envsubst '${TMPPORT}' < /app/dynamic_conf.yaml.template > /app/dynamic_conf.yaml
 

@@ -14,5 +14,4 @@ echo "TMPPORT resolved to ${TMPPORT}"
 
 envsubst '${PORT} ${TMPPORT}' < /etc/caddy/Caddyfile.template > /etc/caddy/Caddyfile
 
-# Caddy 시작
 exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile

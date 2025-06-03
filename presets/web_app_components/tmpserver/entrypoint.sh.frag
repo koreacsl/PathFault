@@ -1,6 +1,5 @@
 echo "Starting Nginx Web Server..."
 
-# Nginx 설정 템플릿에서 환경 변수 치환
 if [ -f /etc/nginx/nginx.conf.template ]; then
     envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
     echo "Nginx configuration generated with PORT=$PORT"
@@ -11,11 +10,9 @@ fi
 
 echo "Starting Nginx Web Server..."
 
-# Nginx 설정 파일 확인
 if [ ! -f /etc/nginx/nginx.conf ]; then
     echo "Error: nginx.conf not found in /etc/nginx. Ensure your configuration file is correctly mounted."
     exit 1
 fi
 
-# Nginx 실행
 exec nginx -g "daemon off;"
