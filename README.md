@@ -1,7 +1,7 @@
-# PathFault: Automated Exploit Generation for Web Applications via HTTP Message Parser Discrepancies
+# PathFault: Automated Exploit Generator for Web Services via HTTP Message Parser Discrepancies
 ![PathFault Logo](./figs/PathFaultLogo.png)
 
-PathFault is a tool designed to identify and exploit **path confusion vulnerabilities** in modern web applications.  
+PathFault is a tool designed to identify and exploit **path confusion vulnerabilities** in modern web services.  
 It leverages HTTP message parser inconsistencies across chained web components to automatically generate and validate effective exploit payloads.
 
 > 📄 If you are looking for how to reproduce the case study in our paper, please refer to the [case study guide](./case_study/README.md).  
@@ -22,7 +22,7 @@ The overall architecture is illustrated below:
 
 ### Step 1: Building the Surrogate Model
 
-To begin, a penetration tester sets up a **Mimic Environment** that replicates the HTTP processing behavior of the real web application, component by component.  
+To begin, a penetration tester sets up a **Mimic Environment** that replicates the HTTP processing behavior of the real web service, component by component.  
 This environment allows each web component (e.g., Nginx, Apache, Tomcat) to be tested in isolation without actual forwarding, while allowing full observation of request/response behavior.
 
 PathFault assists in constructing this environment and then automatically sends a suite of test requests using the **Inconsistency Detector**, designed to identify deviations from standard URI parsing behavior.  
@@ -47,7 +47,7 @@ The core exploit logic is built based on the [Z3 Theorem Prover](https://github.
 
 ## 🧠 Key Benefits
 
-- **Fully automated** exploit generation across multiple web application configurations.
+- **Fully automated** exploit generation across multiple web service configurations.
 - **Surrogate model-based design**, formalized via predicate logic.
 - **Extensible with domain knowledge**, allowing custom condition injection.
 - **Component-wise analysis** that isolates inconsistencies in parsing behavior.
@@ -78,7 +78,7 @@ These specs are **not strict requirements** for running PathFault, but are provi
 
 ### 🐳 Docker & Docker Compose
 
-PathFault uses containerized environments (mimic environments) for testing real-world web application behavior.  
+PathFault uses containerized environments (mimic environments) for testing real-world web service behavior.  
 Please install the following packages:
 
 ```bash
