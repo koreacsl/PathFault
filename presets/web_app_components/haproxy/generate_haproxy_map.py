@@ -16,5 +16,6 @@ with open(cfg_template) as template, open(cfg_output, "w") as output:
     content = content.replace("${PORT}", listen_port)
     content = content.replace("${TMPPORT}", str(tmp_port))
     output.write(content)
+    output.write("\n")
 
 print("HAProxy configuration written to", cfg_output)

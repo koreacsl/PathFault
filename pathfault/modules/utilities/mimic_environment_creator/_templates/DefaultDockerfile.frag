@@ -2,8 +2,8 @@
 RUN apt-get update && apt-get install -y \
     libpcap-dev \
     zlib1g-dev \
-    libpcre3 \
-    libpcre3-dev \
+    libpcre2-8-0 \
+    libpcre2-dev \
     iproute2 \
     git \
     make \
@@ -28,14 +28,15 @@ RUN apt-get update && apt-get install -y \
     asciidoctor \
     xsltproc \
     doxygen \
-    libpcre2-dev
+    libpcre2-dev \
+    libxml2-dev
 
 
 # Wireshark 최신 소스 다운로드
-RUN wget https://www.wireshark.org/download/src/wireshark-latest.tar.xz -O /tmp/wireshark-latest.tar.xz
+RUN wget https://www.wireshark.org/download/src/wireshark-4.4.10.tar.xz -O /tmp/wireshark-4.4.10.tar.xz
 
 # 소스 파일 압축 해제
-RUN mkdir -p /build/wireshark && tar -xvf /tmp/wireshark-latest.tar.xz -C /build/wireshark --strip-components=1
+RUN mkdir -p /build/wireshark && tar -xvf /tmp/wireshark-4.4.10.tar.xz -C /build/wireshark --strip-components=1
 
 # CMake로 빌드 설정
 RUN cmake -S /build/wireshark -B /build/wireshark/build -DBUILD_wireshark=OFF
