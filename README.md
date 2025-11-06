@@ -13,6 +13,11 @@ It leverages HTTP message parser inconsistencies across chained web components t
 
 In the context of this repository, we use the term **Inconsistency** to refer to what is described as **Discrepancy** in the associated paper. While "Discrepancy" is used in the academic context of the paper to denote diferrences in HTTP message parsing, we adopt "Inconsistency" here for its more general and user-friendly connotation, making the tool's purpose more accessible to a broader audience.
 
+## More Details
+ICISC 2025 : You can find a preprint version of the paper [here](./Preprint_PathFault_Automated_Exploit_Generator_for_Web_Services_via_HTTP_Message_Parser_Discrepancies.pdf).
+
+(The official proceedings link will be added once available.)
+
 ## 🔍 About PathFault
 
 **PathFault** implements a two-phase pipeline that automates the entire path confusion exploit generation process.  
