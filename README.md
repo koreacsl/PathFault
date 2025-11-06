@@ -19,6 +19,7 @@ ICISC 2025 : You can find a preprint version of the paper [here](./Preprint_Path
 - Author: Juryeok Kim (mainforce)
   - [LinkedIn](https://www.linkedin.com/in/mainforce/)
   - [Github](https://github.com/main-force)
+  - [ORCiD](https://orcid.org/0009-0001-1457-7631)
   - Contact: isu18390@gmail.com
 - Corresponding Author: Youngjoo Shin
 
